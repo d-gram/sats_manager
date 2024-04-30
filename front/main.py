@@ -1,6 +1,10 @@
 import sys
+import requests
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLineEdit, QVBoxLayout, QWidget, QLabel
 from PyQt6.QtCore import pyqtSignal
+from matplotlib.backends.backend_qtagg import FigureCanvasQTAgg as FigureCanvas
+from matplotlib.figure import Figure
+from graph_builder import plot_transactions
 from utils import *
 
 class Button(QPushButton):
@@ -12,7 +16,7 @@ class Button(QPushButton):
         self.clicked.connect(self.on_click)
 
     def on_click(self):
-        print("Button Clicked!")
+        return
 
 class Input(QLineEdit):
     def __init__(self, parent=None):
@@ -46,8 +50,6 @@ class Label(QLabel):
     def mousePressEvent(self, event):
         self.clicked.emit(sats, btc)
 
-
-
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -61,16 +63,17 @@ class MainWindow(QMainWindow):
         self.button = Button("Submit")
         self.custom_label = Label()
         self.custom_label.setVisible(False)
+        self.canvas = None
 
         # Set up the layout
-        layout = QVBoxLayout()  # Vertical layout
-        layout.addWidget(self.input_field)
-        layout.addWidget(self.button)
-        layout.addWidget(self.custom_label)
+        self.layout = QVBoxLayout()  # Vertical layout
+        self.layout.addWidget(self.input_field)
+        self.layout.addWidget(self.button)
+        self.layout.addWidget(self.custom_label)
 
         # Create a central widget and set the layout
         central_widget = QWidget()
-        central_widget.setLayout(layout)
+        central_widget.setLayout(self.layout)
         self.setCentralWidget(central_widget)
 
         # Connecting button click to an action
@@ -83,14 +86,27 @@ class MainWindow(QMainWindow):
         #print(f"Button clicked! Input field contains: {input_text}")
         global sats, btc
         sats, btc = get_balance(input_text)
+        transactions = get_transactions(input_text)
         
         # Update label text
         if sats != None:
             self.custom_label.setVisible(True)
             self.custom_label.setText(f"Balance: {sats} sats")
+            if self.canvas == None:
+                fig = plot_transactions(transactions)
+                self.canvas = FigureCanvas(fig)
+                layout = self.centralWidget().layout()  # Get the current layout from central widget
+                layout.addWidget(self.canvas)  # Add the canvas to the layout
+            else:
+                self.canvas.figure.clear()
+                plot_transactions(transactions)
+                self.canvas.draw()
+
+            self.canvas.setVisible(True)
         else:
             self.custom_label.setVisible(True)
             self.custom_label.setText("Failed to fetch balance")
+
 
     def on_balance_clicked(self, sats, btc):
         label_text = self.custom_label.text()
