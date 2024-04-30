@@ -1,8 +1,9 @@
 import sys
 from PyQt6.QtWidgets import QApplication, QMainWindow, QPushButton, QLineEdit, QVBoxLayout, QWidget, QLabel
-from utils import get_balance
+from PyQt6.QtCore import pyqtSignal
+from utils import *
 
-class CustomButton(QPushButton):
+class Button(QPushButton):
     def __init__(self, title, parent=None):
         super().__init__(title, parent)
         self.initUI()
@@ -13,7 +14,7 @@ class CustomButton(QPushButton):
     def on_click(self):
         print("Button Clicked!")
 
-class CustomInput(QLineEdit):
+class Input(QLineEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.initUI()
@@ -21,7 +22,7 @@ class CustomInput(QLineEdit):
     def initUI(self):
         self.setPlaceholderText("Enter address")
 
-class CustomLabel(QLabel):
+class Label(QLabel):
     def __init__(self, text='', parent=None):
         super().__init__(text, parent)  # Initialize the superclass with the provided text and parent
         self.initUI()
@@ -37,15 +38,13 @@ class CustomLabel(QLabel):
         self.setFont(font)
         # Set minimum size if you want to ensure a specific look
         # self.setMaximumSize(0,0)
-    '''
     # If you want to add custom behavior, like reacting to events, you can override event handlers.
     # For example, here's how you'd override the mousePressEvent to print something when clicked.
+
+    clicked = pyqtSignal(object, object)
+
     def mousePressEvent(self, event):
-        if event.button() == Qt.MouseButton.LeftButton:
-            print('Label clicked!')
-        # Don't forget to call the superclass method to ensure the event system works correctly.
-        super().mousePressEvent(event)
-    '''
+        self.clicked.emit(sats, btc)
 
 
 
@@ -58,9 +57,9 @@ class MainWindow(QMainWindow):
         self.setGeometry(100, 100, 400, 200)
 
         # Initialize custom widgets
-        self.input_field = CustomInput()
-        self.button = CustomButton("Submit")
-        self.custom_label = CustomLabel()
+        self.input_field = Input()
+        self.button = Button("Submit")
+        self.custom_label = Label()
         self.custom_label.setVisible(False)
 
         # Set up the layout
@@ -76,22 +75,31 @@ class MainWindow(QMainWindow):
 
         # Connecting button click to an action
         self.button.clicked.connect(self.on_button_clicked)
+        self.custom_label.clicked.connect(self.on_balance_clicked)
 
     def on_button_clicked(self):
         # Action to perform when button is clicked
         input_text = self.input_field.text()  # Get text from input field
-        print(f"Button clicked! Input field contains: {input_text}")
-        balance = get_balance(input_text)
+        #print(f"Button clicked! Input field contains: {input_text}")
+        global sats, btc
+        sats, btc = get_balance(input_text)
         
         # Update label text
-        if balance != None:
+        if sats != None:
             self.custom_label.setVisible(True)
-            self.custom_label.setText(f"Balance: {balance} satoshis")
-            print(f"Balance of {input_text} is {balance}")
+            self.custom_label.setText(f"Balance: {sats} sats")
         else:
             self.custom_label.setVisible(True)
             self.custom_label.setText("Failed to fetch balance")
-            print("fetch error")
+
+    def on_balance_clicked(self, sats, btc):
+        label_text = self.custom_label.text()
+        # Check the label text and act accordingly
+        if "sats" in label_text:
+            self.custom_label.setText(f"Balance: {btc} BTC")
+        else:
+            self.custom_label.setText(f"Balance: {sats} sats")
+
 
         
 
