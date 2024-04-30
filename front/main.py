@@ -36,7 +36,7 @@ class CustomLabel(QLabel):
         font.setBold(True)
         self.setFont(font)
         # Set minimum size if you want to ensure a specific look
-        self.setMaximumSize(0,0)
+        # self.setMaximumSize(0,0)
     '''
     # If you want to add custom behavior, like reacting to events, you can override event handlers.
     # For example, here's how you'd override the mousePressEvent to print something when clicked.
@@ -61,6 +61,7 @@ class MainWindow(QMainWindow):
         self.input_field = CustomInput()
         self.button = CustomButton("Submit")
         self.custom_label = CustomLabel()
+        self.custom_label.setVisible(False)
 
         # Set up the layout
         layout = QVBoxLayout()  # Vertical layout
@@ -84,11 +85,11 @@ class MainWindow(QMainWindow):
         
         # Update label text
         if balance != None:
-            self.setMaximumSize(200, 50)
+            self.custom_label.setVisible(True)
             self.custom_label.setText(f"Balance: {balance} satoshis")
             print(f"Balance of {input_text} is {balance}")
         else:
-            self.setMaximumSize(200, 50)
+            self.custom_label.setVisible(True)
             self.custom_label.setText("Failed to fetch balance")
             print("fetch error")
 
