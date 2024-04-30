@@ -1,4 +1,4 @@
 # sats_manager
 BTC address visualiser
 
-anal
+anal i govno
