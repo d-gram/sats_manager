@@ -86,20 +86,18 @@ class MainWindow(QMainWindow):
         #print(f"Button clicked! Input field contains: {input_text}")
         global sats, btc
         sats, btc = get_balance(input_text)
-        transactions = get_transactions(input_text)
         
         # Update label text
         if sats != None:
             self.custom_label.setVisible(True)
             self.custom_label.setText(f"Balance: {sats} sats")
+            fig = plot_transactions(input_text)
             if self.canvas == None:
-                fig = plot_transactions(transactions)
                 self.canvas = FigureCanvas(fig)
                 layout = self.centralWidget().layout()  # Get the current layout from central widget
                 layout.addWidget(self.canvas)  # Add the canvas to the layout
             else:
-                self.canvas.figure.clear()
-                plot_transactions(transactions)
+                self.canvas.figure = fig  # Assign the new figure to the existing canvas
                 self.canvas.draw()
 
             self.canvas.setVisible(True)

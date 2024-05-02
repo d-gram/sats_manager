@@ -29,7 +29,7 @@ def format_number(number, padding):
     formatted_number = f"{int(integer_part)}.{fractional_part:0{padding}d}"
     
     return formatted_number
-
+'''
 def get_transactions(address):
     url = f"https://blockchain.info/rawaddr/{address}"
     response = requests.get(url)
@@ -40,9 +40,8 @@ def get_transactions(address):
             raw_time = int(transaction["time"])
             date = time.strftime('%Y-%m-%d', time.gmtime(raw_time))
             balance = format_number(transaction["balance"], 8)
-            transaction_details.append((date, balance))  # Append details to the list
-        print(transaction_details)
+            transaction_details.append((date, balance))
         return transaction_details
     else:
         print("Error retrieving transactions")
-        return []
+        return []'''
