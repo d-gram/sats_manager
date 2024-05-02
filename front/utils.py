@@ -31,18 +31,30 @@ def format_number(number, padding):
     return formatted_number
 
 def get_transactions(address):
-    url = f"https://blockchain.info/rawaddr/{address}"
+    url = f"https://blockstream.info/api/address/{address}/txs"
     response = requests.get(url)
     if response.status_code == 200:
         transactions = response.json()["txs"]
-        transaction_details = []  # List to store details for all transactions
-        for transaction in transactions:
-            raw_time = int(transaction["time"])
-            date = time.strftime('%Y-%m-%d', time.gmtime(raw_time))
-            balance = format_number(transaction["balance"], 8)
-            transaction_details.append((date, balance))  # Append details to the list
-        print(transaction_details)
-        return transaction_details
+        history = []  # List to store details for all transactions
+        start_balance = 0
+        for tx in transactions:
+            txid = tx['txid']
+            timestamp = tx['status']['block_time']
+            date = time.strftime('%Y-%m-%d', time.gmtime(timestamp))
+
+            # Calculate the balance impact of the transaction
+            received = sum(output['value'] for output in tx['vout'] if address in [x['addresses'][0] for x in output['scriptpubkey_address'] if 'addresses' in x])
+            sent = sum(input['prevout']['value'] for input in tx['vin'] if address == input['prevout']['scriptpubkey_address'])
+            balance_change = received - sent
+
+            # Update current balance based on the transaction
+            start_balance += balance_change
+
+            # Append the date and balance change as a tuple
+            history.append((date, start_balance))
+        for x in history:
+            print(x)
+        return history
     else:
         print("Error retrieving transactions")
         return []
