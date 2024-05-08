@@ -1,7 +1,8 @@
 from bitcoinlib.wallets import Wallet, wallet_create_or_open
 from bitcoinlib.services.services import Service
-import requests
-import time
+from PIL import Image, ImageTk
+import cairosvg
+import io
 
 def get_balance(address):
     try:
@@ -11,9 +12,6 @@ def get_balance(address):
         # Use the default service provider, or you can specify another provider
         service = Service()
         balance = service.getbalance(address)
-
-        # Close and delete the wallet as it is not needed anymore
-        # w.delete()
 
         return balance, format_number(balance, 8)
     except Exception as e:
@@ -29,19 +27,13 @@ def format_number(number, padding):
     formatted_number = f"{int(integer_part)}.{fractional_part:0{padding}d}"
     
     return formatted_number
-'''
-def get_transactions(address):
-    url = f"https://blockchain.info/rawaddr/{address}"
-    response = requests.get(url)
-    if response.status_code == 200:
-        transactions = response.json()["txs"]
-        transaction_details = []  # List to store details for all transactions
-        for transaction in transactions:
-            raw_time = int(transaction["time"])
-            date = time.strftime('%Y-%m-%d', time.gmtime(raw_time))
-            balance = format_number(transaction["balance"], 8)
-            transaction_details.append((date, balance))
-        return transaction_details
-    else:
-        print("Error retrieving transactions")
-        return []'''
+
+def image_loader(image_address, opacity):
+    png = cairosvg.svg2png(url = image_address, output_width = 80, output_height = 80)
+    image = Image.open(io.BytesIO(png))
+    alpha = image.getchannel('A')
+    alpha = alpha.point(lambda p: p * opacity)  # Adjust opacity to 50%
+    image.putalpha(alpha)
+    btc_logo = ImageTk.PhotoImage(image)
+    return btc_logo
+
