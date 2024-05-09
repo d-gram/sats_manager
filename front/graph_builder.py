@@ -5,10 +5,10 @@ from balance_history import *
 from matplotlib.ticker import FuncFormatter
 
 def format_ticks(value, pos):
-    if value >= 1_000_000:  # Values in millions
-        return f'{value / 1_000_000:.1f}M'
+    if value >= 100_000_000:  # Values in millions
+        return f'{value / 10_000_000:.1f}M'
     elif value >= 10_000:   # Values in thousands
-        return f'{value / 1_000}K'
+        return f'{value / 10_000}K'
     else:                   # Values below 10,000
         return str(int(value))
 

@@ -4,7 +4,7 @@ from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from graph_builder import plot_transactions
 from balance_history import process_transaction, fetch_transactions
-from utils import get_balance, image_loader
+from utils import get_balance, image_loader, generate_and_check
 
 # HEX codes for UI colors
 orange = "#F7931A"
@@ -46,7 +46,7 @@ class MainWindow(ctk.CTk):
 
         # Initialize and place custom widgets into entry_frame
         self.input_field = ctk.CTkEntry(self.entry_frame, 
-                                        placeholder_text = "Enter address", 
+                                        placeholder_text = "Enter (X/Y/Z)pub", 
                                         fg_color = "#180E1B",
                                         text_color = "white",
                                         font = ("MiriamLibre-Regular", 20), 
@@ -164,7 +164,6 @@ class MainWindow(ctk.CTk):
 
     def on_button_clicked(self):
         input_text = self.input_field.get()  # Get text from input field (address)
-
         global sats, btc 
         sats, btc = get_balance(input_text) # Use get_balance to retrieve address balance and store both the sats and btc amounts
         
@@ -219,7 +218,7 @@ class MainWindow(ctk.CTk):
         else:
             self.balance_label.configure(text="Failed to fetch balance", image = "")
 
-        columns = ('TX #', 'Date', 'Type', 'Value', 'Fee')
+        columns = ('TX Hash', 'Date', 'Type', 'Value', 'Fee')
         tree = ttk.Treeview(self.transactions_frame,
                             columns=columns,
                             show='headings')
@@ -238,17 +237,16 @@ class MainWindow(ctk.CTk):
             tree.heading(col, text=col.title())
             tree.column(col, width=100, anchor='center')
 
-        # Assuming abc() function handles the API call and returns formatted transactions
-        transactions_data = process_transaction(fetch_transactions(input_text), input_text)  # Pass appropriate parameters
+        results = generate_and_check(input_text)
 
-        # Iterate over transactions and populate the treeview
-        i = 1
-        for index, tx in enumerate(transactions_data):
-            if tx['value'] != 0:
-                tree.insert('', 'end', values=(i, tx['date'], tx['type'], tx['value'], tx['fee']))
-            else:
-                continue
-            i+=1
+        for index, tx in enumerate(results):
+            tree.insert('', 'end', values=(
+                tx['tx_hash'],  # Adjust the key names based on the actual keys in your transaction data
+                tx['date'],
+                tx['type'],
+                tx['value'],
+                tx['fee']
+            ))
 
         # Integrate the Treeview into a ctk.CTkScrollbar for scroll functionality
         scrollbar = ctk.CTkScrollbar(self.transactions_frame, command=tree.yview)
