@@ -2,10 +2,9 @@ from bitcoinlib.wallets import Wallet, wallet_create_or_open
 from bitcoinlib.services.services import Service
 from bip_utils import Bip44, Bip44Coins, Bip44Changes, Bip49,  Bip49Coins, Bip84, Bip84Coins
 from PIL import Image, ImageTk
-from concurrent.futures import ThreadPoolExecutor, as_completed
+#from concurrent.futures import ThreadPoolExecutor, as_completed
 import cairosvg
 import requests
-import csv
 import io
 
 def get_balance(address):
