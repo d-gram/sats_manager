@@ -1,9 +1,10 @@
 import sys
+from datetime import datetime
 import customtkinter as ctk
 from tkinter import ttk
 from matplotlib.backends.backend_tkagg import FigureCanvasTkAgg
 from graph_builder import plot_transactions
-from balance_history import process_transaction, fetch_transactions
+from balance_history import process_transaction
 from utils import get_balance, image_loader, generate_and_check
 
 # HEX codes for UI colors
@@ -19,7 +20,7 @@ class MainWindow(ctk.CTk):
 
         # Set some window properties
         self.title("Sats Manager")
-        self.geometry("1800x765")
+        self.geometry("1600x765")
         self.resizable(False, False)
         self.configure(fg_color = 'white')
         self.grid_columnconfigure(0, weight = 1)
@@ -81,7 +82,7 @@ class MainWindow(ctk.CTk):
                                         fg_color = "transparent",
                                         border_width = 1,
                                         border_color = orange,
-                                        width = 800,
+                                        width = 700,
                                         height = 125)
         
         self.balance_frame.grid(column = 1,
@@ -134,7 +135,7 @@ class MainWindow(ctk.CTk):
                                         fg_color = "transparent",
                                         border_width = 1,
                                         border_color = orange,
-                                        width = 800,
+                                        width = 700,
                                         height = 600)
         
         self.transactions_frame.grid(column = 1,
@@ -166,7 +167,17 @@ class MainWindow(ctk.CTk):
         input_text = self.input_field.get()  # Get text from input field (address)
         global sats, btc 
         sats, btc = get_balance(input_text) # Use get_balance to retrieve address balance and store both the sats and btc amounts
-        
+
+        detailed_transactions = generate_and_check(input_text)
+
+        if detailed_transactions:
+            # Loop through each address and process its transactions
+            for address, transactions in detailed_transactions.items():
+                transaction_details = process_transaction(transactions, address)
+                print(f"Transaction details for {address}: {transaction_details}")
+        else:
+            print("No transactions found across all addresses.")
+
         # Update label text to show the balance instead of placeholder image
         if sats is not None:
             self.balance_label.grid_remove()
@@ -180,9 +191,9 @@ class MainWindow(ctk.CTk):
             
             self.balance_label.bind("<Button-1>", self.on_balance_clicked)
 
-            fig, numTransactions = plot_transactions(input_text)
+            fig = plot_transactions(transaction_details)
 
-            self.numTransactions_label = ctk.CTkLabel(self.balance_frame, text = f"{len(numTransactions):,} recorded transactions",text_color = "black", font = ("MiriamLibre-Regular", 25))
+            self.numTransactions_label = ctk.CTkLabel(self.balance_frame, text = f"{len(transaction_details):,} recorded transactions",text_color = "black", font = ("MiriamLibre-Regular", 25))
             
             self.numTransactions_label.grid(column = 0,
                                     row = 1,
@@ -236,17 +247,18 @@ class MainWindow(ctk.CTk):
         for col in columns:
             tree.heading(col, text=col.title())
             tree.column(col, width=100, anchor='center')
-
-        results = generate_and_check(input_text)
-
-        for index, tx in enumerate(results):
-            tree.insert('', 'end', values=(
-                tx['tx_hash'],  # Adjust the key names based on the actual keys in your transaction data
-                tx['date'],
-                tx['type'],
-                tx['value'],
-                tx['fee']
-            ))
+        
+        for transaction in transaction_details:
+            if all(key in transaction for key in ['txid', 'date', 'type', 'value', 'fee']):
+                tree.insert('', 'end', values=(
+                    transaction['txid'],
+                    transaction['date'],
+                    transaction['type'],
+                    transaction['value'],
+                    transaction['fee']
+                ))
+            else:
+                print(f"Missing data in transaction: {transaction}")
 
         # Integrate the Treeview into a ctk.CTkScrollbar for scroll functionality
         scrollbar = ctk.CTkScrollbar(self.transactions_frame, command=tree.yview)

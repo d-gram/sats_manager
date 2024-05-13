@@ -5,6 +5,7 @@ from PIL import Image, ImageTk
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import cairosvg
 import requests
+import csv
 import io
 
 def get_balance(address):

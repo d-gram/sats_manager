@@ -12,44 +12,43 @@ def format_ticks(value, pos):
     else:                   # Values below 10,000
         return str(int(value))
 
-def plot_transactions(address):
-    transactions = fetch_transactions(address)
-    plot_data = calculate_balance_history(transactions, address)
+def plot_transactions(transactions_dict):
+    dates = []
+    balance = 0  # Initialize balance to zero
+    balance_history = []  # List to store balance history
+    current_year = datetime.now().year  # Get the current year
 
-    xaxis = []
-    yaxis = []
-
-    for timestamp, balance in plot_data:
-        date = datetime.fromtimestamp(int(timestamp))
-        xaxis.append(date)
-        yaxis.append(balance)
+    for tx in transactions_dict:
+        # Convert date string to datetime object
+        date_obj = datetime.strptime(tx['date'], '%d.%m.%Y %H:%M:%S')
+        dates.append(date_obj)
+        if tx['type'] == 'spend':
+            balance -= tx['value'] + tx['fee']
+        elif tx['type'] == 'receive':
+            balance += tx['value']
+        balance_history.append(balance)
 
     fig, ax = plt.subplots(figsize=(10, 5))
-    ax.plot(xaxis, yaxis, marker=',', color='#F7931A')
+    ax.plot(dates, balance_history, marker=',', color='#F7931A')
 
-    # Set up date formatting based on time range
-    if len(xaxis) > 1:
-        time_range = (xaxis[-1] - xaxis[0]).days / 30
-        if time_range <= 3:
-            ax.xaxis.set_major_locator(mdates.DayLocator())
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%d %b'))
-        elif 3 < time_range <= 6:
-            ax.xaxis.set_major_locator(mdates.MonthLocator())
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%b'))
-            ax.xaxis.set_minor_locator(mdates.DayLocator(interval=10))
-            ax.xaxis.set_minor_formatter(mdates.DateFormatter('%d'))
-            ax.tick_params(axis='x', which='minor', pad=20, colors='white')
-            for label in ax.get_xticklabels(which='major'):
-                label.set_fontsize(10)
-                label.set_fontweight('bold')
+    # Set up date formatting based on whether transactions are in the current year
+    if len(dates) > 1:
+        if any(date.year < current_year for date in dates):
+            # Transactions from previous years
+            major_locator = mdates.MonthLocator()  # Every month
+            major_formatter = mdates.DateFormatter('%b %Y')  # 'Jan 2020'
         else:
-            ax.xaxis.set_major_locator(mdates.MonthLocator())
-            ax.xaxis.set_major_formatter(mdates.DateFormatter('%b'))
+            # Transactions from the current year
+            major_locator = mdates.MonthLocator()  # Every month
+            major_formatter = mdates.DateFormatter('%b %d')  # 'Jan 30'
 
-    ax.set_title('Account Balance History (Sats)')
+        ax.xaxis.set_major_locator(major_locator)
+        ax.xaxis.set_major_formatter(major_formatter)
+    
+    ax.set_title('Balance History (Sats)')
     fig.set_facecolor('#180E1B')
     ax.set_facecolor('#180E1B')
-    ax.yaxis.set_major_formatter(FuncFormatter(format_ticks))
+    ax.yaxis.set_major_formatter(FuncFormatter(lambda x, p: format(int(x), ',')))
     ax.grid(True)
     
     ax.title.set_color('white')
@@ -58,5 +57,6 @@ def plot_transactions(address):
     ax.tick_params(axis='x', colors='white')
     ax.tick_params(axis='y', colors='white')
 
-    return fig, xaxis  # Return the figure object to be used in PyQt6
+    return fig
+
 
